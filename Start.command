@@ -1,4 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 cd "$(dirname "$0")"
-python3 -m http.server 5177
+
+if [ ! -d "node_modules" ]; then
+  npm install
+fi
+
+npm run dev -- --host 127.0.0.1 --port 5177

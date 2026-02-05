@@ -1,73 +1,19 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Granola-Style Notes (MVP)</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <main class="app">
-    <header class="header">
-      <div>
-        <h1>Meeting Notes</h1>
-        <p class="sub">Google Meet only · No bot · Local capture</p>
-      </div>
-      <div class="pill" id="statusPill">
-        <span class="dot" id="statusDot"></span>
-        <span id="statusText">Idle</span>
-        <span class="time" id="elapsed">00:00</span>
-      </div>
-    </header>
-
-    <section class="controls">
-      <button class="btn primary" id="startBtn">Start Recording</button>
-      <button class="btn danger" id="stopBtn" disabled>Stop</button>
-      <button class="btn" id="transcribeBtn" disabled>Transcribe</button>
-      <button class="btn" id="enhanceBtn" disabled>Enhance Notes</button>
-    </section>
-
-    <section class="tips">
-      <strong>Before you start:</strong> Choose “Chrome Tab” and enable “Share tab audio”.
-    </section>
-
-    <section class="grid">
-      <div class="card">
-        <div class="card-title">Transcript</div>
-        <div class="scroll" id="transcript"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Draft Notes</div>
-        <textarea id="draft" placeholder="Type quick bullets while you meet…"></textarea>
-
-        <div class="divider"></div>
-        <div class="card-title">Enhanced Notes</div>
-        <pre id="enhanced" class="enhanced"></pre>
-      </div>
-    </section>
-
-    <section class="api">
-      <div class="api-row">
-        <label>Groq API Key</label>
-        <input type="password" id="apiKey" placeholder="Paste key here (stored only in this page)" />
-      </div>
-      <div class="api-row">
-        <label>Transcription Model</label>
-        <input type="text" id="sttModel" value="whisper-large-v3-turbo" />
-      </div>
-      <div class="api-row">
-        <label>LLM Model</label>
-        <input type="text" id="chatModel" value="llama-3.1-8b-instant" />
-      </div>
-    </section>
-
-    <footer class="footer">
-      Recording stays local. Transcription + enhancement run via your Groq key.
-      <span class="built-by">Built by ChatGPT</span>
-    </footer>
-  </main>
-
-  <script src="app.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Granola Notes MVP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
