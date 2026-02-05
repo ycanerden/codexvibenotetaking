@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Badge } from './components/ui/badge'
 import { Button } from './components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card'
@@ -15,6 +15,13 @@ export default function App() {
   const [sttModel, setSttModel] = useState('whisper-large-v3-turbo')
   const [chatModel, setChatModel] = useState('llama-3.1-8b-instant')
   const [statusText, setStatusText] = useState('Idle')
+  const [calendarConnected, setCalendarConnected] = useState(false)
+  const [eventTitle, setEventTitle] = useState('Meeting')
+  const [eventDate, setEventDate] = useState('')
+  const [eventTime, setEventTime] = useState('10:00')
+  const [eventDuration, setEventDuration] = useState('30')
+  const [attendeeEmail, setAttendeeEmail] = useState('')
+  const [events, setEvents] = useState<{ id: string; summary?: string; start?: any }[]>([])
 
   const displayStreamRef = useRef<MediaStream | null>(null)
   const micStreamRef = useRef<MediaStream | null>(null)
@@ -22,6 +29,25 @@ export default function App() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const recordedChunksRef = useRef<Blob[]>([])
   const timerRef = useRef<number | null>(null)
+
+  async function checkCalendarStatus() {
+    const res = await fetch('/api/status')
+    if (res.ok) {
+      const data = await res.json()
+      setCalendarConnected(Boolean(data.connected))
+    }
+  }
+
+  async function loadEvents() {
+    const res = await fetch('/api/events')
+    if (!res.ok) return
+    const data = await res.json()
+    setEvents(data.items || [])
+  }
+
+  useEffect(() => {
+    checkCalendarStatus()
+  }, [])
 
   const timeString = useMemo(() => {
     const m = String(Math.floor(elapsedSeconds / 60)).padStart(2, '0')
@@ -199,6 +225,29 @@ export default function App() {
     setStatusText('Idle')
   }
 
+  async function createEvent() {
+    if (!calendarConnected) {
+      alert('Connect Google Calendar first.')
+      return
+    }
+    const res = await fetch('/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: eventTitle,
+        date: eventDate,
+        time: eventTime,
+        durationMinutes: eventDuration,
+        attendeeEmail: attendeeEmail || undefined
+      })
+    })
+    if (!res.ok) {
+      alert('Failed to create event')
+      return
+    }
+    await loadEvents()
+  }
+
   return (
     <div className="min-h-screen px-6 py-10">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -206,12 +255,12 @@ export default function App() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="font-display text-3xl text-ink">Granola Notes</h1>
-              <Badge variant="default">Built by ChatGPT</Badge>
-            </div>
-            <p className="mt-2 text-sm text-ink/60">
-              Google Meet only · No bot · Local capture from shared Chrome tab
-            </p>
-          </div>
+          <Badge variant="default">Built by ChatGPT</Badge>
+        </div>
+        <p className="mt-2 text-sm text-ink/60">
+          Google Meet only · No bot · Local capture from shared Chrome tab
+        </p>
+      </div>
           <div className="flex items-center gap-3 rounded-full border border-edge bg-white/80 px-4 py-2 text-sm font-semibold">
             <span
               className={`h-2 w-2 rounded-full ${
@@ -296,6 +345,86 @@ export default function App() {
             <div>
               <label className="text-xs font-semibold text-ink/60">LLM Model</label>
               <Input value={chatModel} onChange={(e) => setChatModel(e.target.value)} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Calendar + Scheduling (Single User)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  window.open('/auth', '_blank')
+                  setTimeout(() => checkCalendarStatus(), 1500)
+                }}
+              >
+                Connect Google Calendar
+              </Button>
+              <Button variant="secondary" onClick={loadEvents}>
+                Refresh Events
+              </Button>
+              <Badge variant={calendarConnected ? 'accent' : 'default'}>
+                {calendarConnected ? 'Connected' : 'Not Connected'}
+              </Badge>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <div>
+                <label className="text-xs font-semibold text-ink/60">Title</label>
+                <Input value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-ink/60">Attendee Email (optional)</label>
+                <Input
+                  value={attendeeEmail}
+                  onChange={(e) => setAttendeeEmail(e.target.value)}
+                  placeholder="guest@company.com"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-ink/60">Date</label>
+                <Input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-ink/60">Time</label>
+                  <Input type="time" value={eventTime} onChange={(e) => setEventTime(e.target.value)} />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-ink/60">Duration (min)</label>
+                  <Input
+                    type="number"
+                    value={eventDuration}
+                    onChange={(e) => setEventDuration(e.target.value)}
+                    min={15}
+                    step={15}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Button onClick={createEvent}>Create Event</Button>
+
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-ink/50">Upcoming</div>
+              <div className="mt-2 space-y-2 text-sm text-ink/80">
+                {events.length === 0 ? (
+                  <div>No upcoming events loaded.</div>
+                ) : (
+                  events.map((event) => (
+                    <div key={event.id} className="rounded-xl border border-edge bg-white/70 px-3 py-2">
+                      <div className="font-semibold">{event.summary || 'Untitled'}</div>
+                      <div className="text-xs text-ink/60">
+                        {event.start?.dateTime || event.start?.date}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>

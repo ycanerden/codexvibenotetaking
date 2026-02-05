@@ -8,6 +8,7 @@
 - Works best when the Google Meet call is in the shared Chrome tab.
 - You must enable **Share tab audio** when prompted.
 - Paste your Groq API key in the UI for transcription and enhancement.
+- For calendar, create `server/.env` from `server/.env.example` and paste your Google OAuth client ID + secret there (local only).
 
 ## Legacy
 The original vanilla MVP is kept in `legacy-vanilla/`.
